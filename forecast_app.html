@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecast Comercial - Gowan</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#1a1a18;font-size:13px}
+:root{--blue:#185FA5;--blue-l:#E6F1FB;--green:#3B6D11;--green-l:#EAF3DE;--amber:#854F0B;--amber-l:#FAEEDA;--red:#A32D2D;--red-l:#FCEBEB;--gray:#5F5E5A;--border:#e0ddd6;--white:#fff}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;background:var(--white);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:14px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.logo-title{font-size:13px;font-weight:600}
+.logo-sub{font-size:10px;color:var(--gray)}
+.user-info{padding:10px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.av-vendedor{background:#E6F1FB;color:#185FA5}
+.av-supervisor{background:#EAF3DE;color:#3B6D11}
+.av-gerente{background:#FAEEDA;color:#854F0B}
+.av-operacoes{background:#f4f0fb;color:#534AB7}
+.av-admin{background:#f9f8f6;color:#5F5E5A}
+.user-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:10px;color:var(--gray)}
+.nav{padding:6px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;font-size:12px;color:var(--gray);border-left:2px solid transparent}
+.nav-item:hover{background:#f5f5f3;color:#1a1a18}
+.nav-item.active{background:var(--blue-l);color:var(--blue);border-left-color:var(--blue);font-weight:500}
+.nav-item i{font-size:15px;flex-shrink:0}
+.sidebar-bottom{padding:10px 16px;border-top:0.5px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.role-label{font-size:10px;color:var(--gray);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+select{width:100%;font-size:11px;padding:4px 8px;border:0.5px solid var(--border);border-radius:6px;background:var(--white);color:#1a1a18;cursor:pointer}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:0.5px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;gap:10px;flex-wrap:wrap}
+.page-title{font-size:14px;font-weight:500}
+.badge{font-size:10px;padding:3px 7px;border-radius:4px;font-weight:500}
+.badge-blue{background:var(--blue-l);color:var(--blue)}
+.badge-amber{background:var(--amber-l);color:var(--amber)}
+.badge-red{background:var(--red-l);color:var(--red)}
+.badge-green{background:var(--green-l);color:var(--green)}
+.content{padding:16px 20px;flex:1}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:16px}
+.metric-card{background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:10px 12px}
+.metric-label{font-size:10px;color:var(--gray);margin-bottom:3px}
+.metric-value{font-size:18px;font-weight:500}
+.metric-sub{font-size:10px;color:var(--gray);margin-top:2px}
+.table-card{background:var(--white);border:0.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.table-header{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.table-title{font-size:12px;font-weight:500}
+.table-wrap{overflow-x:auto;max-height:62vh}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#f9f8f6;padding:0;text-align:center;font-weight:500;color:var(--gray);border-bottom:0.5px solid var(--border);border-right:0.5px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
+th.left{text-align:left;padding:7px 10px}
+td{padding:5px 8px;border-bottom:0.5px solid var(--border);border-right:0.5px solid var(--border);white-space:nowrap}
+td:last-child,th:last-child{border-right:none}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+td.num,th.num{text-align:right}
+.th-mes{background:#185FA5;color:#fff;font-size:11px;font-weight:500;padding:5px 8px;text-align:center;border-right:2px solid #fff}
+.th-sub{font-size:10px;font-weight:400;padding:4px 6px;border-top:0.5px solid var(--border)}
+.th-sub-budget{background:#faf6ee;color:var(--amber)}
+.th-sub-hist{background:#f4f4f4;color:var(--gray)}
+.th-sub-ultfc{background:#eef4f0;color:var(--green)}
+.th-sub-fc{background:#e8f0fb;color:var(--blue);font-weight:500}
+td.c-budget{background:#fdfaf4;color:#5a3e00;text-align:right}
+td.c-hist{background:#f9f9f9;color:var(--gray);text-align:right}
+td.c-ultfc{background:#f2f8f4;color:#2a5a38;text-align:right}
+td.c-fc{background:#f0f5fd;text-align:center}
+td.c-fc input[type=number]{width:78px;border:0.5px solid #b5d4f4;border-radius:4px;padding:3px 6px;font-size:11px;text-align:right;background:#fff}
+td.c-fc input[type=number]:focus{outline:none;border-color:var(--blue);background:var(--blue-l)}
+td.c-fc input[type=number]:disabled{background:#f9f8f6;color:var(--gray);cursor:not-allowed;border-color:var(--border)}
+.col-sep{border-right:2px solid var(--border) !important}
+.total-col{background:#f0f4fb;font-weight:500;text-align:right;padding:5px 8px}
+.total-th{background:#dce8f8;color:var(--blue);font-weight:500;padding:6px 8px;text-align:right}
+.foot-row td{background:#e8f0fb;font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;border:0.5px solid var(--border);background:var(--white);font-size:11px;cursor:pointer;color:#1a1a18;font-weight:500}
+.btn:hover{background:#f5f5f3}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#0c447c}
+.btn-sm{padding:4px 9px}
+.btn-green{background:var(--green-l);color:var(--green);border-color:#639922}
+.btn-red{background:var(--red-l);color:var(--red);border-color:var(--red)}
+input[type=text],input[type=password],input[type=email]{border:0.5px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;background:var(--white);width:100%}
+input[type=text]:focus,input[type=password]:focus,input[type=email]:focus{outline:none;border-color:var(--blue)}
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-bar select{width:auto;min-width:130px}
+.filter-bar label{font-size:11px;color:var(--gray);white-space:nowrap}
+.screen{display:none}
+.screen.active{display:block}
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f5f5f3}
+.login-card{background:var(--white);border:0.5px solid var(--border);border-radius:12px;padding:36px 32px;width:400px}
+.login-logo{text-align:center;margin-bottom:20px}
+.login-logo-title{font-size:18px;font-weight:600;margin-top:8px}
+.login-logo-sub{font-size:11px;color:var(--gray)}
+.login-field{margin-bottom:14px}
+.login-field label{font-size:11px;color:var(--gray);display:block;margin-bottom:5px;font-weight:500}
+.login-error{background:var(--red-l);color:var(--red);font-size:11px;padding:8px 12px;border-radius:6px;margin-bottom:14px;display:none}
+.login-status{background:var(--blue-l);color:var(--blue);font-size:11px;padding:8px 12px;border-radius:6px;margin-bottom:14px;display:none;text-align:center}
+/* MODAIS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:10px;padding:24px;width:440px;border:0.5px solid var(--border);max-height:90vh;overflow-y:auto}
+.modal h3{font-size:14px;font-weight:500;margin-bottom:16px}
+.modal label{font-size:11px;color:var(--gray);display:block;margin-bottom:3px;margin-top:10px}
+.modal input[type=date],.modal input[type=text],.modal input[type=password]{width:100%;font-size:12px;padding:6px 10px;border:0.5px solid var(--border);border-radius:6px;background:var(--white)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.scope-bar{background:var(--blue-l);border:0.5px solid #85b7eb;border-radius:6px;padding:7px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:11px}
+.cutoff-bar{background:var(--amber-l);border:0.5px solid #EF9F27;border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:11px}
+.tabs{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:14px}
+.tab{padding:7px 14px;font-size:12px;cursor:pointer;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+.chart-card{background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px}
+.chart-title{font-size:12px;font-weight:500;margin-bottom:10px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:11px;color:var(--gray)}
+.legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:3px}
+.spinner{border:3px solid #e0ddd6;border-top:3px solid var(--blue);border-radius:50%;width:18px;height:18px;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div style="width:48px;height:48px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto">
+        <i class="ti ti-chart-bar" style="color:#fff;font-size:24px"></i>
+      </div>
+      <div class="login-logo-title">Gowan Forecast</div>
+      <div class="login-logo-sub">Gestão de Forecast Comercial · AF 2025–2026</div>
+    </div>
+    <div class="login-field">
+      <label>E-mail corporativo</label>
+      <input type="email" id="inputLogin" placeholder="seu.nome@gowanco.com" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="inputSenha" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="loginErro"></div>
+    <div class="login-status" id="loginStatus"></div>
+    <button class="btn btn-primary" id="btnLogin" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">
+      <i class="ti ti-login"></i> Entrar
+    </button>
+    <p style="font-size:10px;color:var(--gray);margin-top:14px;text-align:center">Acesso restrito · Gowan Brasil</p>
+  </div>
+</div>
+
+<!-- MODAL CONFIG -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal">
+    <h3><i class="ti ti-settings" style="color:var(--blue)"></i> Configurações</h3>
+    <label>URL do Excel no OneDrive</label>
+    <input type="text" id="cfgUrl">
+    <label>Data de corte — Vendedores</label>
+    <input type="date" id="cfgCV">
+    <label>Data de corte — Gestores</label>
+    <input type="date" id="cfgCG">
+    <div class="modal-footer">
+      <button class="btn" onclick="closeAdmin()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAdmin()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SENHA -->
+<div class="modal-bg" id="senhaModal">
+  <div class="modal">
+    <h3><i class="ti ti-lock" style="color:var(--blue)"></i> Alterar senha</h3>
+    <label>Nova senha</label>
+    <input type="password" id="senhaNova" placeholder="••••••••">
+    <label>Confirmar</label>
+    <input type="password" id="senhaConf" placeholder="••••••••">
+    <div id="senhaErro" style="color:var(--red);font-size:11px;margin-top:8px;display:none"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeSenha()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarSenha()">Alterar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appScreen" style="display:none">
+  <div class="sidebar">
+    <div class="logo">
+      <div style="width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-chart-bar" style="color:#fff;font-size:14px"></i>
+      </div>
+      <div><div class="logo-title">Gowan Forecast</div><div class="logo-sub">AF 2025–2026</div></div>
+    </div>
+    <div class="user-info">
+      <div class="avatar" id="sideAvatar"></div>
+      <div style="overflow:hidden"><div class="user-name" id="sideUser"></div><div class="user-role" id="sideRole"></div></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showPage('forecast')" id="nav-forecast"><i class="ti ti-edit"></i> Forecast</div>
+      <div class="nav-item" onclick="showPage('consolidado')" id="nav-consolidado"><i class="ti ti-table"></i> Consolidado</div>
+      <div class="nav-item" onclick="showPage('comparativo')" id="nav-comparativo"><i class="ti ti-scale"></i> Comparativo</div>
+      <div class="nav-item" onclick="showPage('dashboard')" id="nav-dashboard"><i class="ti ti-dashboard"></i> Dashboard</div>
+      <div class="nav-item" id="nav-admin" style="display:none" onclick="openAdmin()"><i class="ti ti-settings"></i> Configurações</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div id="scopePanel" style="display:none">
+        <div class="role-label" id="scopeLabel">Visualizando</div>
+        <select id="scopeSelect" onchange="changeScope(this.value)"></select>
+      </div>
+      <button class="btn btn-sm" style="justify-content:center" onclick="openSenha()"><i class="ti ti-lock"></i> Alterar senha</button>
+      <button class="btn btn-sm btn-red" style="justify-content:center" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- FORECAST -->
+    <div class="screen active" id="page-forecast">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Forecast — <span id="fcPeriodo"></span></div>
+          <div style="font-size:10px;color:var(--gray)">Ano fiscal 2025–2026</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span id="cutoffBadge" class="badge badge-amber"></span>
+          <button class="btn btn-sm" onclick="showPage('consolidado')"><i class="ti ti-table"></i> Consolidado</button>
+          <button class="btn btn-primary btn-sm" id="btnEnviar" onclick="enviarForecast()"><i class="ti ti-send"></i> Enviar</button>
+        </div>
+      </div>
+      <div class="content">
+        <div id="cutoffWarning" class="cutoff-bar" style="display:none">
+          <i class="ti ti-lock" style="color:var(--amber);font-size:16px"></i>
+          <span><strong>Período encerrado.</strong> Prazo: <span id="cutoffDateLabel"></span>.</span>
+        </div>
+        <div id="scopeInfo" class="scope-bar" style="display:none">
+          <i class="ti ti-eye" style="color:var(--blue);font-size:15px"></i>
+          <span id="scopeInfoText"></span>
+        </div>
+        <div class="cards-grid">
+          <div class="metric-card"><div class="metric-label">Clientes</div><div class="metric-value" id="mcClientes">—</div></div>
+          <div class="metric-card"><div class="metric-label">Linhas</div><div class="metric-value" id="mcLinhas">—</div></div>
+          <div class="metric-card"><div class="metric-label">Total Qtd (6m)</div><div class="metric-value" id="mcQtd">—</div><div class="metric-sub">kg/L</div></div>
+          <div class="metric-card"><div class="metric-label">Total R$ (6m)</div><div class="metric-value" id="mcRS">—</div></div>
+        </div>
+        <div style="display:flex;gap:14px;margin-bottom:10px;font-size:11px;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdfaf4;border:0.5px solid #d4a84b;margin-right:4px"></span>Budget</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f4f4f4;border:0.5px solid #bbb;margin-right:4px"></span>Histórico ano ant.</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f2f8f4;border:0.5px solid #7cb89a;margin-right:4px"></span>Último forecast</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8f0fb;border:0.5px solid #85b7eb;margin-right:4px"></span>Forecast (editável)</span>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title"><i class="ti ti-edit" style="color:var(--blue)"></i> Preenchimento</div>
+            <div class="filter-bar">
+              <label>Cliente:</label>
+              <select id="filtCliente" onchange="renderForecast()"><option value="">Todos</option></select>
+              <label>Produto:</label>
+              <select id="filtProduto" onchange="renderForecast()"><option value="">Todos</option></select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table><thead id="fcHead"></thead><tbody id="fcBody"></tbody><tfoot id="fcFoot"></tfoot></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSOLIDADO -->
+    <div class="screen" id="page-consolidado">
+      <div class="topbar">
+        <div class="page-title">Consolidado — <span id="consLabel"></span></div>
+        <div style="display:flex;gap:6px">
+          <select id="filtConsRegional" style="width:auto;font-size:11px;padding:4px 8px;border:0.5px solid var(--border);border-radius:6px;background:var(--white)" onchange="renderConsolidado(activeConsTab)">
+            <option value="">Todas as regionais</option>
+          </select>
+          <button class="btn btn-sm btn-green" onclick="exportXLSX()"><i class="ti ti-download"></i> Baixar Excel</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="cards-grid">
+          <div class="metric-card"><div class="metric-label">Total Qtd</div><div class="metric-value" id="consTotQtd">—</div></div>
+          <div class="metric-card"><div class="metric-label">Total R$</div><div class="metric-value" id="consTotRS">—</div></div>
+          <div class="metric-card"><div class="metric-label">Linhas</div><div class="metric-value" id="consTotLinhas">—</div></div>
+        </div>
+        <div class="tabs">
+          <div class="tab active" onclick="switchConsTab('regional',this)">Por regional</div>
+          <div class="tab" onclick="switchConsTab('produto',this)">Por produto</div>
+          <div class="tab" onclick="switchConsTab('supervisor',this)">Por supervisão</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><div class="table-title" id="consTabTitle"></div></div>
+          <div class="table-wrap"><table><thead><tr id="consHead"></tr></thead><tbody id="consBody"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARATIVO -->
+    <div class="screen" id="page-comparativo">
+      <div class="topbar"><div class="page-title">Comparativo Forecast × Realizado × Budget</div></div>
+      <div class="content">
+        <div class="table-card">
+          <div class="table-header"><div class="table-title">Indicadores gerais</div></div>
+          <div class="table-wrap"><table><thead><tr><th class="left">Indicador</th><th class="num" style="padding:7px 10px">Qtd</th><th class="num" style="padding:7px 10px">R$</th></tr></thead><tbody id="comparativoBody"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="screen" id="page-dashboard">
+      <div class="topbar"><div class="page-title">Dashboard Gerencial</div></div>
+      <div class="content">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="chart-card"><div class="chart-title">Forecast por supervisão (Qtd)</div><div style="position:relative;height:220px"><canvas id="chartSup"></canvas></div></div>
+          <div class="chart-card">
+            <div class="chart-title">Por categoria (%)</div>
+            <div class="chart-legend">
+              <span><span class="legend-dot" style="background:#185FA5"></span>Estratégico</span>
+              <span><span class="legend-dot" style="background:#3B6D11"></span>Portfólio</span>
+              <span><span class="legend-dot" style="background:#EF9F27"></span>Outros</span>
+            </div>
+            <div style="position:relative;height:200px"><canvas id="chartCat"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-card"><div class="chart-title">Tendência mensal (Qtd)</div><div style="position:relative;height:180px"><canvas id="chartTend"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════ CONFIG ═══════════════
+var CONFIG = {
+  spSiteUrl:       'https://gowanco.sharepoint.com/sites/GowanBrasil',
+  spListForecast:  'Forecast Gowan',
+  spListClientes:  'Forecast Clientes',
+  spListProdutos:  'Forecast produtos',
+  spListUsuarios:  'Forecast Usuario',
+  spListBudget:    'Forecast Budget',
+  spListHistorico: 'Forecast Historico',
+  spListFcAnt:     'Forecast Anterior',
+  cutoffVendedor:  '2025-07-22',
+  cutoffGestor:    '2025-07-25',
+  anoFiscal:       '2025-2026'
+};
+
+var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var currentUser  = null;
+var currentScope = null;
+var activeConsTab = 'regional';
+var chartsInit   = false;
+var DB = { usuarios:[], clientes:{}, produtos:[], histIdx:{}, budgIdx:{}, fcAntIdx:{}, rows:[] };
+
+// ═══════════════ UTILS ═══════════════
+function gerarMeses(){
+  var hoje = new Date();
+  var ini  = new Date(hoje.getFullYear(), hoje.getMonth()+1, 1); // próximo mês
+  var out  = [];
+  for(var i=0;i<6;i++){
+    var d = new Date(ini.getFullYear(), ini.getMonth()+i, 1);
+    out.push(MESES[d.getMonth()]+'/'+String(d.getFullYear()).slice(2));
+  }
+  return out;
+}
+function histKey(m){ var p=m.split('/'); return p[0]+'/'+String(parseInt(p[1])-1).slice(-2); }
+function fmt(n){ return (Math.round(n)||0).toLocaleString('pt-BR'); }
+function fmtRS(n){ return n>=1000000?'R$ '+(n/1000000).toFixed(1)+'M':'R$ '+fmt(n); }
+function fmtDate(d){ return d.split('-').reverse().join('/'); }
+function hoje(){ return new Date().toLocaleDateString('pt-BR'); }
+function gerarVersao(){ var d=new Date(); var p=new Date(d.getFullYear(),d.getMonth()+1,1); return p.getFullYear()+'-'+String(p.getMonth()+1).padStart(2,'0'); }
+function isVendedorLocked(){ return new Date()>new Date(CONFIG.cutoffVendedor+'T23:59:59'); }
+function isGestorLocked(){   return new Date()>new Date(CONFIG.cutoffGestor+'T23:59:59'); }
+function podeEditar(){
+  if(!currentUser) return false;
+  var p=currentUser.papel;
+  if(p==='admin'||p==='operacoes') return true;
+  if(p==='vendedor') return !isVendedorLocked();
+  return !isGestorLocked();
+}
+function podeVerObs(){ var p=currentUser?currentUser.papel:''; return p==='supervisor'||p==='gerente'||p==='operacoes'||p==='admin'; }
+function formatarMes(data){
+  var s=String(data||'').trim();
+  var m1=s.match(/^(\d{2})-(\d{2})-(\d{4})$/); if(m1) return MESES[parseInt(m1[2])-1]+'/'+m1[3].slice(2);
+  var m2=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m2) return MESES[parseInt(m2[2])-1]+'/'+m2[1].slice(2);
+  var m3=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(m3) return MESES[parseInt(m3[2])-1]+'/'+m3[3].slice(2);
+  if(s.indexOf('/')!==-1) return s;
+  return '';
+}
+function produtoPorId(id){ return DB.produtos.find(function(p){return p.id===String(id);})||null; }
+function showStatus(msg){ var el=document.getElementById('loginStatus'); el.innerHTML='<span class="spinner"></span>'+msg; el.style.display='block'; }
+function hideStatus(){ document.getElementById('loginStatus').style.display='none'; }
+function showErro(msg){ var el=document.getElementById('loginErro'); el.textContent=msg; el.style.display='block'; hideStatus(); }
+function hideErro(){ document.getElementById('loginErro').style.display='none'; }
+
+// ═══════════════ LER LISTA SHAREPOINT ═══════════════
+function spGetList(listName, select){
+  var url = CONFIG.spSiteUrl+'/_api/web/lists/getbytitle(\''+listName+'\')/items?$top=5000'+(select?'&$select='+select:'');
+  return fetch(url, {
+    credentials: 'include',
+    headers: {'Accept':'application/json;odata=verbose'}
+  })
+  .then(function(r){ if(!r.ok) throw new Error(listName+': HTTP '+r.status); return r.json(); })
+  .then(function(d){ return d.d.results; });
+}
+
+// ═══════════════ CARREGAR DADOS DAS LISTAS ═══════════════
+function carregarExcel(){
+  return new Promise(function(resolve, reject){
+    showStatus('Conectando ao SharePoint...');
+    Promise.all([
+      spGetList(CONFIG.spListUsuarios, 'Usuario_ID,Nome,Email_Microsoft,Papel,Supervisor_ID,Gerente_ID'),
+      spGetList(CONFIG.spListProdutos, 'ID_Produto,Produto_SKU,Produto,Preco_RS'),
+      spGetList(CONFIG.spListClientes, 'ID_Cliente,Nome_Cliente,Regional,Supervisao'),
+      spGetList(CONFIG.spListBudget,   'ID_Cliente,ID_Produto,Mes,Qtd,Ano_Fiscal'),
+      spGetList(CONFIG.spListHistorico,'ID_Cliente,ID_Produto,Mes,Qtd,Ano_Fiscal'),
+      spGetList(CONFIG.spListFcAnt,    'ID_Cliente,ID_Produto,Mes,Qtd,Ano_Fiscal')
+    ])
+    .then(function(results){
+      showStatus('Processando dados...');
+      var usuarios  = results[0];
+      var produtos  = results[1];
+      var clientes  = results[2];
+      var budget    = results[3];
+      var historico = results[4];
+      var fcAnt     = results[5];
+
+      // Usuarios
+      DB.usuarios = usuarios.map(function(u){ return {
+        id:         u.Usuario_ID||'',
+        nome:       u.Nome||'',
+        email:      (u.Email_Microsoft||'').toLowerCase().trim(),
+        papel:      (u.Papel||'vendedor').toLowerCase(),
+        supervisor: u.Supervisor_ID||'',
+        gerente:    u.Gerente_ID||''
+      };});
+
+      // Produtos
+      DB.produtos = produtos.map(function(p){ return {
+        id:     String(p.ID_Produto||''),
+        sku:    p.Produto_SKU||'',
+        nome:   p.Produto||'',
+        cat:    '',
+        precoRS:parseFloat(p.Preco_RS)||0
+      };});
+
+      // Clientes por regional
+      DB.clientes = {};
+      clientes.forEach(function(c){
+        var reg = String(c.Regional||'').trim();
+        if(!reg) return;
+        if(!DB.clientes[reg]) DB.clientes[reg]=[];
+        var id=String(c.ID_Cliente||'');
+        if(id && !DB.clientes[reg].find(function(x){return x.id===id;}))
+          DB.clientes[reg].push({id:id, nome:c.Nome_Cliente||''});
+      });
+
+      // Budget — chave ID_Cliente|ID_Produto|Mes
+      DB.budgIdx={};
+      budget.forEach(function(r){
+        var k=String(r.ID_Cliente)+'|'+String(r.ID_Produto)+'|'+String(r.Mes||'');
+        DB.budgIdx[k]=(DB.budgIdx[k]||0)+(parseFloat(r.Qtd)||0);
+      });
+
+      // Historico — chave ID_Cliente|ID_Produto|Mes (ano anterior)
+      DB.histIdx={};
+      historico.forEach(function(r){
+        var k=String(r.ID_Cliente)+'|'+String(r.ID_Produto)+'|'+String(r.Mes||'');
+        DB.histIdx[k]=(DB.histIdx[k]||0)+(parseFloat(r.Qtd)||0);
+      });
+
+      // Forecast Anterior — chave ID_Cliente|ID_Produto|Mes
+      DB.fcAntIdx={};
+      fcAnt.forEach(function(r){
+        var k=String(r.ID_Cliente)+'|'+String(r.ID_Produto)+'|'+String(r.Mes||'');
+        DB.fcAntIdx[k]=(DB.fcAntIdx[k]||0)+(parseFloat(r.Qtd)||0);
+      });
+
+      showStatus('Dados carregados!');
+      resolve();
+    })
+    .catch(function(e){
+      reject(new Error('Erro ao carregar listas do SharePoint: '+e.message+
+        '\n\nVerifique se está logado no SharePoint no mesmo navegador.'));
+    });
+  });
+}
+
+// ═══════════════ SHAREPOINT REST API ═══════════════
+function spHeaders(){
+  return {
+    'Accept':       'application/json;odata=verbose',
+    'Content-Type': 'application/json;odata=verbose',
+    'X-RequestDigest': window._spDigest||''
+  };
+}
+
+// Obtém o Request Digest (token de segurança do SharePoint)
+function getDigest(){
+  return fetch(CONFIG.spSiteUrl+'/_api/contextinfo', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose'}
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ window._spDigest = d.d.GetContextWebInformation.FormDigestValue; });
+}
+
+// Adiciona um item na lista SharePoint
+function spAddItem(dados){
+  var url = CONFIG.spSiteUrl+'/_api/web/lists/getbytitle(\''+CONFIG.spListName+'\')/items';
+  var body = JSON.stringify(Object.assign({'__metadata':{'type':'SP.Data.Forecast_x0020_GowanListItem'}}, dados));
+  return fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers: spHeaders(),
+    body: body
+  }).then(function(r){
+    if(!r.ok) throw new Error('Erro '+r.status);
+    return r.json();
+  });
+}
+
+// Grava todas as linhas do forecast na lista
+function gravarNoSharePoint(linhas){
+  return getDigest().then(function(){
+    // grava em sequência para não sobrecarregar
+    return linhas.reduce(function(promise, linha){
+      return promise.then(function(){ return spAddItem(linha); });
+    }, Promise.resolve());
+  });
+}
+
+// ═══════════════ LOGIN ═══════════════
+function doLogin(){
+  var email = (document.getElementById('inputLogin').value||'').trim().toLowerCase();
+  var senha = document.getElementById('inputSenha').value;
+  hideErro();
+
+  if(!email||!senha){ showErro('Preencha e-mail e senha.'); return; }
+  if(senha!=='forecast'){ showErro('Senha incorreta.'); return; }
+
+  document.getElementById('btnLogin').disabled=true;
+
+  carregarExcel()
+    .then(function(){
+      // busca usuário nos dados carregados
+      var usuario = null;
+      DB.usuarios.forEach(function(u){
+        if(usuario) return;
+        var ue=(u.Email_Microsoft||u.email||'').toLowerCase().trim();
+        if(ue===email){
+          usuario={
+            id:    u.Usuario_ID||u.Regional||'',
+            nome:  u.Nome||u.nome||'',
+            email: ue,
+            papel: (u.Papel||u.papel||'vendedor').toLowerCase(),
+            supervisor: u.Supervisor_ID||u.supervisor||'',
+            gerente:    u.Gerente_ID||u.gerente||''
+          };
+        }
+      });
+
+      // fallback admin/operacoes
+      if(!usuario && email==='admin@gowanco.com')
+        usuario={id:'admin',nome:'Administrador',email:email,papel:'admin',supervisor:'',gerente:''};
+      if(!usuario && email==='operacoes@gowanco.com')
+        usuario={id:'operacoes',nome:'Operações',email:email,papel:'operacoes',supervisor:'',gerente:''};
+
+      if(!usuario){
+        showErro('E-mail não encontrado na base de usuários.');
+        document.getElementById('btnLogin').disabled=false;
+        return;
+      }
+
+      currentUser  = usuario;
+      currentScope = usuario.id||usuario.papel;
+
+      // monta linhas
+      montarRows();
+
+      hideStatus();
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('appScreen').style.display='flex';
+      document.getElementById('btnLogin').disabled=false;
+      setupSidebar();
+      setupScopePanel();
+      populateFiltros();
+      renderForecast();
+      renderConsolidado('regional');
+      if(!chartsInit){initCharts();chartsInit=true;}
+    })
+    .catch(function(e){
+      showErro('Não foi possível carregar os dados: '+e.message+'\n\nVerifique se está logado no SharePoint/OneDrive no mesmo navegador.');
+      document.getElementById('btnLogin').disabled=false;
+    });
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter' && document.getElementById('loginScreen').style.display!=='none') doLogin();
+});
+
+function doLogout(){
+  currentUser=null; currentScope=null; DB.rows=[];
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('inputLogin').value='';
+  document.getElementById('inputSenha').value='';
+  hideErro(); showPage('forecast');
+}
+
+// ═══════════════ MONTAR ROWS ═══════════════
+function regionaisDoUsuario(){
+  var u=currentUser; if(!u) return [];
+  if(u.papel==='vendedor') return [u.id];
+  // supervisor: regionais cujo supervisor_id bate
+  if(u.papel==='supervisor'){
+    return DB.usuarios
+      .filter(function(x){ return (x.Supervisor_ID||x.supervisor||'')===u.id && (x.Papel||x.papel||'')===('vendedor'); })
+      .map(function(x){ return x.Usuario_ID||x.Regional||''; });
+  }
+  // gerente: todas as regionais dos supervisores dele
+  if(u.papel==='gerente'){
+    var supIds=DB.usuarios
+      .filter(function(x){ return (x.Gerente_ID||x.gerente||'')===u.id && (x.Papel||x.papel||'')==='supervisor'; })
+      .map(function(x){return x.Usuario_ID||x.id||'';});
+    return DB.usuarios
+      .filter(function(x){ return supIds.indexOf(x.Supervisor_ID||x.supervisor||'')!==-1 && (x.Papel||x.papel||'')==='vendedor'; })
+      .map(function(x){return x.Usuario_ID||x.Regional||'';});
+  }
+  // admin/operacoes: todas
+  return Object.keys(DB.clientes);
+}
+
+function regionaisVisiveis(){
+  var sc=currentScope; var u=currentUser;
+  if(!sc||sc===u.id||sc===u.papel) return regionaisDoUsuario();
+  // scope = regional específica
+  if(DB.clientes[sc]) return [sc];
+  // scope = supervisor
+  var supVends=DB.usuarios
+    .filter(function(x){return (x.Supervisor_ID||x.supervisor||'')===sc&&(x.Papel||x.papel||'')==='vendedor';})
+    .map(function(x){return x.Usuario_ID||x.Regional||'';});
+  if(supVends.length) return supVends;
+  return regionaisDoUsuario();
+}
+
+function montarRows(){
+  var meses = gerarMeses();
+  var regs  = regionaisVisiveis();
+  DB.rows   = [];
+
+  regs.forEach(function(reg){
+    var clientes = DB.clientes[reg]||[];
+    clientes.forEach(function(c){
+      DB.produtos.forEach(function(p){
+        var budget=[],hist=[],ultFC=[],vals=[];
+        meses.forEach(function(m){
+          var k  = c.id+'|'+p.id+'|'+m;
+          var hk = c.id+'|'+p.id+'|'+histKey(m);
+          budget.push(DB.budgIdx[k]  ||0);
+          hist.push(  DB.histIdx[hk] ||0);
+          ultFC.push( DB.fcAntIdx[k] ||0);
+          vals.push(  DB.fcAntIdx[k] ||0); // pré-preenche com último FC
+        });
+        // só inclui se tiver algum dado ou se for admin/supervisor
+        var temDado=budget.some(function(v){return v>0;})||hist.some(function(v){return v>0;})||ultFC.some(function(v){return v>0;});
+        if(temDado){
+          DB.rows.push({
+            regional:reg, idCliente:c.id, cliente:c.nome,
+            idProduto:p.id, sku:p.sku, cat:p.cat,
+            budget:budget, hist:hist, ultFC:ultFC, vals:vals, obs:''
+          });
+        }
+      });
+    });
+  });
+}
+
+// ═══════════════ CACHE LOCAL (localStorage) ═══════════════
+function chaveCache(reg){ return 'fc:'+gerarVersao()+':'+reg; }
+
+function salvarCache(reg, rowsReg){
+  var payload=JSON.stringify({regional:reg,versao:gerarVersao(),data:hoje(),
+    rows:rowsReg.map(function(r){return{idCliente:r.idCliente,idProduto:r.idProduto,vals:r.vals,obs:r.obs};})
+  });
+  try{ localStorage.setItem(chaveCache(reg), payload); }catch(e){ console.error('Cache erro:',e); }
+  return Promise.resolve();
+}
+
+function lerCache(reg){
+  try{
+    var v=localStorage.getItem(chaveCache(reg));
+    return Promise.resolve(v?JSON.parse(v):null);
+  }catch(e){ return Promise.resolve(null); }
+}
+
+function lerTodosForecasts(){
+  try{
+    var prefix='fc:'+gerarVersao()+':';
+    var arr=[];
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k && k.indexOf(prefix)===0){
+        try{ var v=localStorage.getItem(k); if(v) arr.push(JSON.parse(v)); }catch(e){}
+      }
+    }
+    return Promise.resolve(arr);
+  }catch(e){ return Promise.resolve([]); }
+}
+
+// ao entrar, mescla cache salvo nas rows
+function mesclarCache(){
+  var regs=regionaisVisiveis();
+  return Promise.all(regs.map(function(reg){return lerCache(reg);}))
+    .then(function(caches){
+      caches.forEach(function(cached){
+        if(!cached||!cached.rows) return;
+        cached.rows.forEach(function(cr){
+          var row=DB.rows.find(function(r){return r.idCliente===cr.idCliente&&r.idProduto===cr.idProduto;});
+          if(row){row.vals=cr.vals;row.obs=cr.obs||'';}
+        });
+      });
+    });
+}
+
+// ═══════════════ SIDEBAR ═══════════════
+var PAPEL_LABEL={vendedor:'Vendedor',supervisor:'Supervisor',gerente:'Gerente',operacoes:'Operações',admin:'Administrador'};
+var PAPEL_AV={vendedor:'av-vendedor',supervisor:'av-supervisor',gerente:'av-gerente',operacoes:'av-operacoes',admin:'av-admin'};
+
+function setupSidebar(){
+  var u=currentUser;
+  var init=(u.nome||'?').split(' ').map(function(x){return x[0]||'';}).join('').slice(0,2).toUpperCase();
+  document.getElementById('sideAvatar').textContent=init;
+  document.getElementById('sideAvatar').className='avatar '+(PAPEL_AV[u.papel]||'av-admin');
+  document.getElementById('sideUser').textContent=u.nome;
+  document.getElementById('sideRole').textContent=(PAPEL_LABEL[u.papel]||u.papel)+(u.id&&u.papel==='vendedor'?' · '+u.id:'');
+  document.getElementById('nav-admin').style.display=(u.papel==='admin')?'flex':'none';
+}
+
+function setupScopePanel(){
+  var u=currentUser; var panel=document.getElementById('scopePanel'); var sel=document.getElementById('scopeSelect');
+  sel.innerHTML='';
+  if(u.papel==='vendedor'){panel.style.display='none';return;}
+  panel.style.display='block';
+  var opts=[{id:u.id||u.papel,label:'Toda a equipe'}];
+  if(u.papel==='supervisor'){
+    document.getElementById('scopeLabel').textContent='Vendedor';
+    DB.usuarios.filter(function(x){return (x.Supervisor_ID||x.supervisor||'')===u.id&&(x.Papel||x.papel||'')==='vendedor';})
+      .forEach(function(v){opts.push({id:v.Usuario_ID||v.Regional||'',label:(v.Nome||v.nome||'')});});
+  } else {
+    document.getElementById('scopeLabel').textContent='Regional / Vendedor';
+    // agrupa por supervisor
+    var sups={};
+    DB.usuarios.filter(function(x){return(x.Papel||x.papel||'')==='vendedor';}).forEach(function(v){
+      var s=v.Supervisor_ID||v.supervisor||'—';
+      if(!sups[s]) sups[s]=[];
+      sups[s].push(v);
+    });
+    Object.keys(sups).forEach(function(s){
+      opts.push({id:'sup_'+s,label:'── '+s});
+      sups[s].forEach(function(v){opts.push({id:v.Usuario_ID||v.Regional||'',label:'  '+( v.Nome||v.nome||v.Usuario_ID||'')});});
+    });
+  }
+  opts.forEach(function(o){var el=document.createElement('option');el.value=o.id;el.textContent=o.label;sel.appendChild(el);});
+  sel.value=u.id||u.papel;
+}
+
+function changeScope(val){
+  currentScope=val;
+  montarRows();
+  mesclarCache().then(function(){ populateFiltros(); renderForecast(); renderConsolidado(activeConsTab); });
+}
+
+// ═══════════════ FILTROS ═══════════════
+function rowsFiltrados(){
+  var filtC=(document.getElementById('filtCliente')||{value:''}).value;
+  var filtP=(document.getElementById('filtProduto')||{value:''}).value;
+  return DB.rows.filter(function(r){return(!filtC||r.idCliente===filtC)&&(!filtP||r.idProduto===filtP);});
+}
+
+function populateFiltros(){
+  var clientes={},prods={};
+  DB.rows.forEach(function(r){clientes[r.idCliente]=r.cliente;prods[r.idProduto]=r.sku;});
+  var fc=document.getElementById('filtCliente'); fc.innerHTML='<option value="">Todos</option>';
+  Object.keys(clientes).sort().forEach(function(id){var o=document.createElement('option');o.value=id;o.textContent=id+' — '+clientes[id].slice(0,35);fc.appendChild(o);});
+  var fp=document.getElementById('filtProduto'); fp.innerHTML='<option value="">Todos</option>';
+  Object.keys(prods).sort().forEach(function(id){var o=document.createElement('option');o.value=id;o.textContent=id+' — '+prods[id];fp.appendChild(o);});
+  var fr=document.getElementById('filtConsRegional'); fr.innerHTML='<option value="">Todas as regionais</option>';
+  var regs=[]; DB.rows.forEach(function(r){if(regs.indexOf(r.regional)===-1)regs.push(r.regional);});
+  regs.sort().forEach(function(r){var o=document.createElement('option');o.value=r;o.textContent=r;fr.appendChild(o);});
+}
+
+// ═══════════════ FORECAST RENDER ═══════════════
+function renderForecast(){
+  var meses=gerarMeses(); var locked=!podeEditar(); var u=currentUser;
+  document.getElementById('fcPeriodo').textContent=meses[0]+' a '+meses[5];
+  document.getElementById('consLabel').textContent=meses[0]+' a '+meses[5];
+
+  var si=document.getElementById('scopeInfo');
+  if(u.papel!=='vendedor'){si.style.display='flex';document.getElementById('scopeInfoText').innerHTML='Exibindo: <strong>'+(currentScope===u.id||currentScope===u.papel?'toda a equipe':currentScope)+'</strong>';}
+  else si.style.display='none';
+
+  var badge=document.getElementById('cutoffBadge'); var warn=document.getElementById('cutoffWarning');
+  if(u.papel==='vendedor'){
+    badge.textContent='Corte: '+fmtDate(CONFIG.cutoffVendedor);
+    badge.className='badge '+(isVendedorLocked()?'badge-red':'badge-amber');
+    warn.style.display=isVendedorLocked()?'flex':'none';
+    document.getElementById('cutoffDateLabel').textContent=fmtDate(CONFIG.cutoffVendedor);
+    document.getElementById('btnEnviar').disabled=isVendedorLocked();
+  } else {
+    badge.textContent='Corte gestores: '+fmtDate(CONFIG.cutoffGestor);
+    badge.className='badge '+(isGestorLocked()?'badge-red':'badge-blue');
+    warn.style.display='none';
+    document.getElementById('btnEnviar').disabled=false;
+  }
+
+  var isGest=podeVerObs(); var extraCols=u.papel!=='vendedor'?1:0;
+  var row1='<tr>'+
+    '<th class="left col-sep" rowspan="2" style="min-width:130px;vertical-align:middle">Cliente</th>'+
+    '<th class="left col-sep" rowspan="2" style="min-width:180px;vertical-align:middle">Produto SKU</th>';
+  if(u.papel!=='vendedor') row1+='<th class="left col-sep" rowspan="2" style="min-width:70px;vertical-align:middle">Regional</th>';
+  meses.forEach(function(m,i){
+    var sep=i<5?'border-right:2px solid #fff':'';
+    row1+='<th colspan="4" class="th-mes" style="'+sep+'">'+m+' <span style="font-weight:400;font-size:10px;opacity:.8">(hist. '+histKey(m)+')</span></th>';
+  });
+  row1+='<th colspan="2" class="total-th" rowspan="1" style="vertical-align:top;padding:5px 8px;text-align:center">Totais 6m</th>';
+  if(isGest) row1+='<th class="left" rowspan="2" style="min-width:140px;vertical-align:middle;background:#f9f8f6;padding:7px 10px">Observação</th>';
+  row1+='</tr>';
+  var row2='<tr>';
+  meses.forEach(function(m,i){
+    var br=i<5?'border-right:2px solid var(--border)':'';
+    row2+='<th class="th-sub th-sub-budget">Budg.</th><th class="th-sub th-sub-hist">Hist.</th><th class="th-sub th-sub-ultfc">Últ.FC</th><th class="th-sub th-sub-fc" style="'+br+'">Forecast</th>';
+  });
+  row2+='<th class="total-th" style="font-size:10px;padding:5px 6px">Qtd</th><th class="total-th" style="font-size:10px;padding:5px 6px">R$</th></tr>';
+  document.getElementById('fcHead').innerHTML=row1+row2;
+
+  var filtered=rowsFiltrados(); var bodyHtml='';
+  filtered.forEach(function(r,i){
+    var p=produtoPorId(r.idProduto)||{precoRS:0};
+    var tq=r.vals.reduce(function(a,b){return a+b;},0);
+    var mesesHtml='';
+    meses.forEach(function(m,j){
+      var sep=j<5?'border-right:2px solid var(--border)':'';
+      mesesHtml+='<td class="c-budget">'+fmt(r.budget[j])+'</td>';
+      mesesHtml+='<td class="c-hist">'+fmt(r.hist[j])+'</td>';
+      mesesHtml+='<td class="c-ultfc">'+fmt(r.ultFC[j])+'</td>';
+      if(locked) mesesHtml+='<td class="c-fc" style="'+sep+'">'+fmt(r.vals[j])+'</td>';
+      else mesesHtml+='<td class="c-fc" style="'+sep+'"><input type="number" value="'+r.vals[j]+'" min="0" step="1" onchange="updateVal('+i+','+j+',this.value)"></td>';
+    });
+    var regCol=u.papel!=='vendedor'?'<td class="col-sep" style="padding:5px 8px;font-size:10px;color:var(--gray)">'+r.regional+'</td>':'';
+    var obsCol=isGest?'<td><input type="text" value="'+r.obs+'" placeholder="Justificativa..." style="width:130px;border:0.5px solid var(--border);border-radius:4px;padding:3px 6px;font-size:11px" '+(isGestorLocked()&&u.papel!=='admin'?'disabled':'')+' onchange="DB.rows['+DB.rows.indexOf(r)+'].obs=this.value"></td>':'';
+    bodyHtml+='<tr>'+
+      '<td class="col-sep" style="padding:5px 10px;white-space:normal;max-width:130px;font-size:11px">'+r.cliente+'</td>'+
+      '<td class="col-sep" style="padding:5px 10px;white-space:normal;max-width:180px"><strong style="font-size:11px">'+r.sku+'</strong></td>'+
+      regCol+mesesHtml+
+      '<td class="total-col" id="tqtd_'+i+'">'+fmt(tq)+'</td>'+
+      '<td class="total-col" id="trs_'+i+'">'+fmtRS(tq*(p.precoRS||0))+'</td>'+
+      obsCol+'</tr>';
+  });
+  document.getElementById('fcBody').innerHTML=bodyHtml;
+
+  var totQ=filtered.reduce(function(a,r){return a+r.vals.reduce(function(x,y){return x+y;},0);},0);
+  var totR=filtered.reduce(function(a,r){var p=produtoPorId(r.idProduto)||{precoRS:0};return a+r.vals.reduce(function(x,y){return x+y;},0)*(p.precoRS||0);},0);
+  var nc=meses.length*4;
+  document.getElementById('fcFoot').innerHTML=
+    '<tr class="foot-row"><td class="col-sep" colspan="'+(2+extraCols)+'" style="padding:6px 10px">Total</td>'+
+    Array(nc).fill('<td></td>').join('')+
+    '<td class="total-col">'+fmt(totQ)+'</td><td class="total-col">'+fmtRS(totR)+'</td>'+(isGest?'<td></td>':'')+'</tr>';
+
+  var cl={};filtered.forEach(function(r){cl[r.idCliente]=1;});
+  document.getElementById('mcClientes').textContent=Object.keys(cl).length;
+  document.getElementById('mcLinhas').textContent=filtered.length;
+  document.getElementById('mcQtd').textContent=fmt(totQ);
+  document.getElementById('mcRS').textContent=fmtRS(totR);
+}
+
+function updateVal(i,j,v){
+  var filtered=rowsFiltrados(); var row=filtered[i]; if(!row) return;
+  row.vals[j]=parseFloat(v)||0;
+  var p=produtoPorId(row.idProduto)||{precoRS:0};
+  var tq=row.vals.reduce(function(a,b){return a+b;},0);
+  var tqEl=document.getElementById('tqtd_'+i); var trsEl=document.getElementById('trs_'+i);
+  if(tqEl) tqEl.textContent=fmt(tq);
+  if(trsEl) trsEl.textContent=fmtRS(tq*(p.precoRS||0));
+}
+
+// ═══════════════ ENVIAR FORECAST ═══════════════
+function enviarForecast(){
+  var meses=gerarMeses(); var filtered=rowsFiltrados(); var u=currentUser;
+  var linhas=[];
+  filtered.forEach(function(r){
+    meses.forEach(function(m,j){
+      if(r.vals[j]>0) linhas.push({regional:r.regional,cliente:r.cliente,idCliente:r.idCliente,sku:r.sku,idProduto:r.idProduto,mes:m,qtd:r.vals[j],obs:r.obs||''});
+    });
+  });
+  if(linhas.length===0){alert('Nenhum volume preenchido.');return;}
+
+  // salva cache por regional
+  var regs={};
+  filtered.forEach(function(r){regs[r.regional]=1;});
+  var promessas=Object.keys(regs).map(function(reg){
+    return salvarCache(reg,DB.rows.filter(function(r){return r.regional===reg;}));
+  });
+
+  Promise.all(promessas).then(function(){
+    var assunto=encodeURIComponent('Forecast '+CONFIG.anoFiscal+' | '+(u.nome||u.id)+' ('+(u.id||'')+') | '+hoje());
+    var cab='Regional\tCliente\tID Cliente\tSKU\tID Produto\tMes\tQtd\tObservacao\r\n';
+    var corpo=encodeURIComponent(
+      'Vendedor: '+(u.nome||u.id)+' ('+(u.id||'')+') | Supervisão: '+(u.supervisor||'—')+'\r\n'+
+      'Data: '+hoje()+' | Período: '+meses[0]+' a '+meses[5]+'\r\n'+
+      'Linhas: '+linhas.length+' | Qtd total: '+fmt(linhas.reduce(function(a,l){return a+l.qtd;},0))+'\r\n\r\n'+
+      '--- DADOS (cole no Excel) ---\r\n\r\n'+cab+
+      linhas.map(function(l){return[l.regional,l.cliente,l.idCliente,l.sku,l.idProduto,l.mes,l.qtd,l.obs].join('\t');}).join('\r\n')+
+      '\r\n\r\n--- FIM ---'
+    );
+    window.location.href='mailto:'+encodeURIComponent('mlima@gowanco.com')+'?cc='+encodeURIComponent(u.email||'')+'&subject='+assunto+'&body='+corpo;
+    setTimeout(function(){alert('✅ Forecast salvo!\n'+linhas.length+' linhas · Para: mlima@gowanco.com\nCC: '+(u.email||'')+'\n\nClique Enviar no Outlook.');},500);
+  });
+}
+
+// ═══════════════ CONSOLIDADO ═══════════════
+function switchConsTab(t,el){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});el.classList.add('active');activeConsTab=t;renderConsolidado(t);}
+
+function renderConsolidado(t){
+  var meses=gerarMeses();
+  var filtR=document.getElementById('filtConsRegional').value;
+  var filtered=DB.rows.filter(function(r){return !filtR||r.regional===filtR;});
+  var labels={regional:'Regional',produto:'Produto SKU',supervisor:'Supervisão'};
+  document.getElementById('consTabTitle').textContent='Forecast por '+labels[t];
+  var groups={};
+  filtered.forEach(function(r){
+    var key;
+    if(t==='regional') key=r.regional;
+    else if(t==='produto') key=r.sku;
+    else {
+      var vend=DB.usuarios.find(function(u){return (u.Usuario_ID||u.Regional||'')===r.regional;});
+      key=vend?(vend.Supervisor_ID||vend.supervisor||'—'):'—';
+    }
+    if(!groups[key]) groups[key]={qtds:Array(6).fill(0),rs:Array(6).fill(0)};
+    var p=produtoPorId(r.idProduto)||{precoRS:0};
+    r.vals.forEach(function(v,i){groups[key].qtds[i]+=v;groups[key].rs[i]+=Math.round(v*(p.precoRS||0));});
+  });
+  var hHtml='<th class="left">'+labels[t]+'</th>';
+  meses.forEach(function(m){hHtml+='<th class="num" style="padding:7px 8px">'+m+' Qtd</th><th class="num" style="padding:7px 8px">'+m+' R$</th>';});
+  hHtml+='<th class="num" style="padding:7px 8px">Total Qtd</th><th class="num" style="padding:7px 8px">Total R$</th>';
+  document.getElementById('consHead').innerHTML=hHtml;
+  var tQ=0,tR=0,tQs=Array(6).fill(0),tRs=Array(6).fill(0);
+  var body=Object.keys(groups).sort().map(function(k){
+    var g=groups[k];var q=0,r=0;
+    var html='<tr><td style="padding:6px 10px;font-size:11px">'+k+'</td>';
+    g.qtds.forEach(function(v,i){html+='<td class="num">'+fmt(v)+'</td><td class="num" style="color:var(--blue)">'+fmtRS(g.rs[i])+'</td>';q+=v;r+=g.rs[i];tQs[i]+=v;tRs[i]+=g.rs[i];});
+    html+='<td class="num" style="font-weight:500">'+fmt(q)+'</td><td class="num" style="font-weight:500;color:var(--blue)">'+fmtRS(r)+'</td></tr>';
+    tQ+=q;tR+=r;return html;
+  }).join('');
+  var foot='<tr style="background:#f0f4fb;font-weight:500"><td style="padding:6px 10px">Total</td>';
+  tQs.forEach(function(q,i){foot+='<td class="num">'+fmt(q)+'</td><td class="num" style="color:var(--blue)">'+fmtRS(tRs[i])+'</td>';});
+  foot+='<td class="num">'+fmt(tQ)+'</td><td class="num" style="color:var(--blue)">'+fmtRS(tR)+'</td></tr>';
+  document.getElementById('consBody').innerHTML=body+foot;
+  document.getElementById('consTotQtd').textContent=fmt(tQ);
+  document.getElementById('consTotRS').textContent=fmtRS(tR);
+  document.getElementById('consTotLinhas').textContent=filtered.length;
+}
+
+// ═══════════════ EXPORT XLSX ═══════════════
+function exportXLSX(){
+  var meses=gerarMeses(); var versao=gerarVersao();
+  lerTodosForecasts().then(function(todos){
+    var linhas=[];
+    if(todos.length>0){
+      todos.forEach(function(fc){
+        var vend=DB.usuarios.find(function(u){return(u.Usuario_ID||u.Regional||'')===fc.regional;})||{};
+        (fc.rows||[]).forEach(function(r){
+          var p=produtoPorId(r.idProduto)||{precoRS:0,sku:r.sku||''};
+          meses.forEach(function(m,j){
+            if(r.vals&&r.vals[j]>0){
+              linhas.push([versao,fc.data||'',fc.regional,vend.Nome||vend.nome||'',vend.Supervisor_ID||vend.supervisor||'',
+                r.idCliente,r.cliente||'',r.idProduto,r.sku||p.sku,m,r.vals[j],Math.round(r.vals[j]*(p.precoRS||0)),r.obs||'']);
+            }
+          });
+        });
+      });
+    }
+    // fallback: dados em tela
+    if(!linhas.length){
+      var filtR=document.getElementById('filtConsRegional').value;
+      DB.rows.filter(function(r){return!filtR||r.regional===filtR;}).forEach(function(r){
+        var p=produtoPorId(r.idProduto)||{precoRS:0};
+        var vend=DB.usuarios.find(function(u){return(u.Usuario_ID||u.Regional||'')===r.regional;})||{};
+        meses.forEach(function(m,j){
+          if(r.vals[j]>0) linhas.push([versao,hoje(),r.regional,vend.Nome||vend.nome||'',vend.Supervisor_ID||vend.supervisor||'',
+            r.idCliente,r.cliente,r.idProduto,r.sku,m,r.vals[j],Math.round(r.vals[j]*(p.precoRS||0)),r.obs||'']);
+        });
+      });
+    }
+    if(!linhas.length){alert('Nenhum dado para exportar.');return;}
+    var header=['Versão','Data Envio','Regional','Vendedor','Supervisão','ID Cliente','Cliente','ID Produto','SKU','Mês','Qtd','Valor R$','Observação'];
+    var ws=XLSX.utils.aoa_to_sheet([header].concat(linhas));
+    ws['!cols']=header.map(function(h){return{wch:Math.max(h.length,14)};});
+    var wb2=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb2,ws,'Forecast_Consolidado');
+    XLSX.writeFile(wb2,'Forecast_Gowan_'+versao+'.xlsx');
+  });
+}
+
+// ═══════════════ COMPARATIVO / CHARTS ═══════════════
+function renderComparativo(){
+  var rows=[
+    {l:'Budget anual',q:'—',r:'—',s:''},
+    {l:'Realizado acumulado',q:'—',r:'—',s:''},
+    {l:'Forecast 6 meses',q:fmt(DB.rows.reduce(function(a,r){return a+r.vals.reduce(function(x,y){return x+y;},0);},0)),r:'—',s:'font-weight:500'},
+  ];
+  document.getElementById('comparativoBody').innerHTML=rows.map(function(x){
+    return'<tr><td style="padding:6px 10px;'+x.s+'">'+x.l+'</td><td class="num" style="padding:6px 10px;'+x.s+'">'+x.q+'</td><td class="num" style="padding:6px 10px;'+x.s+'">'+x.r+'</td></tr>';
+  }).join('');
+}
+
+function initCharts(){
+  var meses=gerarMeses();
+  new Chart(document.getElementById('chartSup'),{type:'bar',
+    data:{labels:['Sul','SP HF','Centro Oeste','Nordeste','Citros','B2B'],datasets:[{data:[45000,62000,89000,38000,71000,25000],backgroundColor:'#185FA5',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return fmt(v);}}}}}});
+  new Chart(document.getElementById('chartCat'),{type:'doughnut',
+    data:{labels:['Estratégico','Portfólio','Outros'],datasets:[{data:[55,35,10],backgroundColor:['#185FA5','#3B6D11','#EF9F27'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartTend'),{type:'line',
+    data:{labels:meses,datasets:[{data:[38000,42000,40000,36000,45000,51000],borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.08)',tension:0.4,fill:true,pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return fmt(v);}}}}}});
+}
+
+// ═══════════════ ADMIN ═══════════════
+function openAdmin(){document.getElementById('cfgUrl').value=CONFIG.excelUrl;document.getElementById('cfgCV').value=CONFIG.cutoffVendedor;document.getElementById('cfgCG').value=CONFIG.cutoffGestor;document.getElementById('adminModal').classList.add('open');}
+function closeAdmin(){document.getElementById('adminModal').classList.remove('open');}
+function saveAdmin(){CONFIG.excelUrl=document.getElementById('cfgUrl').value.trim();CONFIG.cutoffVendedor=document.getElementById('cfgCV').value;CONFIG.cutoffGestor=document.getElementById('cfgCG').value;closeAdmin();alert('Configurações salvas!');}
+function openSenha(){document.getElementById('senhaModal').classList.add('open');}
+function closeSenha(){document.getElementById('senhaModal').classList.remove('open');}
+function salvarSenha(){var n=document.getElementById('senhaNova').value;var c=document.getElementById('senhaConf').value;var e=document.getElementById('senhaErro');e.style.display='none';if(n!==c){e.textContent='Senhas não coincidem.';e.style.display='block';return;}if(n.length<8){e.textContent='Mínimo 8 caracteres.';e.style.display='block';return;}closeSenha();alert('Senha registrada!');}
+function showPage(p){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});document.getElementById('page-'+p).classList.add('active');document.getElementById('nav-'+p).classList.add('active');}
+</script>
+</body>
+</html>
